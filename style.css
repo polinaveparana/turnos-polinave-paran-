@@ -1,0 +1,60 @@
+/* style.css */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    color: #333;
+    line-height: 1.6;
+    /* CORRECCIÓN: Nombre exacto de tu imagen subida */
+    background-image: url('1000264550.webp'); 
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+header {
+    background-color: rgba(0, 51, 102, 0.9);
+    color: white;
+    padding: 20px 0;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.contenedor-turnos, .contenedor-admin {
+    background-color: rgba(255, 255, 255, 0.95);
+    max-width: 550px;
+    margin: 30px auto;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+}
+
+/* Estilos de inputs */
+input, select {
+    width: 100%;
+    padding: 12px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+#boton-solicitar {
+    background-color: #0056b3;
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 8px;
+    width: 100%;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+#boton-solicitar:disabled {
+    background-color: #ccc;
+}
+/* ... resto de estilos de la tabla admin ... */
