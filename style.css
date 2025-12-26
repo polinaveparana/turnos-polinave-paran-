@@ -1,13 +1,101 @@
-/* style.css */
-body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-image: url('fondo-pna.jpg'); background-size: cover; background-position: center; background-attachment: fixed; min-height: 100vh; }
-header { background-color: rgba(0, 50, 80, 0.9); color: white; padding: 20px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
-.contenedor-turnos { background-color: rgba(255, 255, 255, 0.95); max-width: 500px; margin: 20px auto; padding: 20px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.3); }
+/* style.css - VERSIÓN FINAL */
+body { 
+    font-family: Arial, sans-serif; 
+    margin: 0; 
+    padding: 0; 
+    background-image: url('fondo-pna.jpg'); 
+    background-size: cover; 
+    background-position: center; 
+    background-attachment: fixed; 
+    min-height: 100vh; 
+}
+
+header { 
+    background-color: rgba(0, 50, 80, 0.9); 
+    color: white; 
+    padding: 20px; 
+    text-align: center; 
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2); 
+}
+
+.contenedor-turnos, .contenedor-admin { 
+    background-color: rgba(255, 255, 255, 0.95); 
+    max-width: 500px; 
+    margin: 20px auto; 
+    padding: 20px; 
+    border-radius: 10px; 
+    box-shadow: 0 0 20px rgba(0,0,0,0.3); 
+}
+
 h2, h3 { color: #004488; border-bottom: 2px solid #ddd; padding-bottom: 10px; }
+
 .campo { margin-bottom: 15px; }
+
 label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
-input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 16px; }
-#boton-solicitar { background-color: #007bff; color: white; padding: 15px; border: none; border-radius: 5px; cursor: pointer; font-size: 1.1em; font-weight: bold; width: 100%; margin-top: 10px; }
+
+input, select { 
+    width: 100%; 
+    padding: 12px; 
+    border: 1px solid #ccc; 
+    border-radius: 5px; 
+    box-sizing: border-box; 
+    font-size: 16px; 
+}
+
+/* Estilo para el botón principal */
+#boton-solicitar, .btn-solicitar { 
+    background-color: #007bff; 
+    color: white; 
+    padding: 15px; 
+    border: none; 
+    border-radius: 5px; 
+    cursor: pointer; 
+    font-size: 1.1em; 
+    font-weight: bold; 
+    width: 100%; 
+    margin-top: 10px; 
+}
+
 #boton-solicitar:disabled { background-color: #a0a0a0; cursor: not-allowed; }
-.mensaje { padding: 10px; border-radius: 5px; margin-bottom: 10px; text-align: center; font-weight: bold; }
-.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-.btn-solicitar { background-color: #28a745; color: white; border: none; padding: 12px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+
+/* Estilo para los mensajes de Error (Feriados/Findes) */
+#mensaje-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 12px;
+    border-radius: 5px;
+    border: 1px solid #f5c6cb;
+    margin: 10px 0;
+    font-weight: bold;
+    text-align: center;
+    display: none; /* Se activa desde el script */
+}
+
+/* Estilos para el Panel de Administración */
+.tabla-turnos { 
+    width: 100%; 
+    border-collapse: collapse; 
+    margin-top: 20px; 
+    font-size: 14px; 
+}
+
+.tabla-turnos th { background: #eee; padding: 10px; text-align: left; }
+.tabla-turnos td { padding: 10px; border-bottom: 1px solid #ddd; text-align: left; }
+
+.btn-eliminar-admin, .btn-atendido { 
+    background-color: #dc3545; 
+    color: white; 
+    border: none; 
+    padding: 8px; 
+    border-radius: 4px; 
+    cursor: pointer; 
+}
+
+.btn-logout { 
+    background: #6c757d; 
+    color: white; 
+    border: none; 
+    padding: 8px 15px; 
+    border-radius: 5px; 
+    margin-bottom: 15px; 
+}
