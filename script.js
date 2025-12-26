@@ -166,3 +166,7 @@ function dibujarTabla(f) {
 window.borrarT = async (id) => {
     if (confirm("¿Eliminar turno?")) await coleccionTurnos.doc(id).delete();
 };
+
+window.borrarT = async (id) => {
+    if (confirm("¿Eliminar turno?")) await coleccionTurnos.doc(id).delete();
+};
