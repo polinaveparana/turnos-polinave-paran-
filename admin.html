@@ -10,6 +10,25 @@
         .contenedor-admin { max-width: 500px; margin: 20px auto; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; }
         .header-pna { background: #003366; color: white; padding: 20px; text-align: center; }
         .btn-logout { background: #ff4d4d; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-bottom: 20px; }
+        
+        /* Botón de Descarga */
+        .btn-descargar { 
+            background-color: #28a745; 
+            color: white; 
+            border: none; 
+            padding: 12px; 
+            border-radius: 6px; 
+            width: 100%; 
+            font-weight: bold; 
+            cursor: pointer; 
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-descargar:hover { background-color: #218838; }
+
         .tabla-turnos { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
         .tabla-turnos th { background: #eee; padding: 10px; }
         .tabla-turnos td { padding: 10px; border-bottom: 1px solid #ddd; text-align: left; }
@@ -30,16 +49,28 @@
 
         <div id="dashboard-contenido" style="display: none;">
             <button id="btn-logout" class="btn-logout">Cerrar Sesión</button>
+            
             <div style="text-align: left; margin-bottom: 20px;">
                 <label><strong>Filtrar por Fecha:</strong></label>
-                <input type="date" id="filtro-fecha" style="width: 100%; padding: 10px;">
+                <input type="date" id="filtro-fecha" style="width: 100%; padding: 10px; margin-top: 5px;">
             </div>
+
+            <button id="btn-descargar" class="btn-descargar">
+                📥 Descargar Planilla del Día
+            </button>
+
             <h3 id="total-turnos" style="color: #003366;">Cargando...</h3>
-            <div id="contenedor-tabla"></div>
+            
+            <div id="contenedor-tabla">
+                </div>
         </div>
     </main>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="script.js" defer></script>
+</body>
+</html>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="script.js" defer></script>
 </body>
