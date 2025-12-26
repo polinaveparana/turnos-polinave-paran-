@@ -5,42 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Admin - PNA Paraná</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 0; background-color: #f0f2f5; }
+        .contenedor-admin { max-width: 500px; margin: 20px auto; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; }
+        .header-pna { background: #003366; color: white; padding: 20px; text-align: center; }
+        .btn-logout { background: #ff4d4d; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-bottom: 20px; }
+        .tabla-turnos { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+        .tabla-turnos th { background: #eee; padding: 10px; }
+        .tabla-turnos td { padding: 10px; border-bottom: 1px solid #ddd; text-align: left; }
+    </style>
 </head>
 <body>
-
-    <header>
+    <div class="header-pna">
         <h1>Administración PNA</h1>
-        <p>Prefectura Naval Paraná - Control de Turnos</p>
-    </header>
+        <p>Prefectura Naval Paraná</p>
+    </div>
 
     <main class="contenedor-admin">
         <div id="area-login">
             <h3>Acceso Restringido</h3>
-            <p>Ingrese el PIN de seguridad para gestionar los turnos.</p>
-            <input type="password" id="admin-pin" placeholder="PIN de Seguridad">
-            <button id="btn-login">Ingresar al Panel</button>
-            <div id="login-error" style="color: red; display: none; margin-top: 10px;">PIN Incorrecto</div>
+            <input type="password" id="admin-pin" placeholder="PIN de Seguridad" style="width: 90%; padding: 12px; margin-bottom: 10px;">
+            <button id="btn-login" class="btn-solicitar" style="width: 95%;">Ingresar</button>
         </div>
 
         <div id="dashboard-contenido" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 id="total-turnos" style="margin: 0;">Cargando turnos...</h3>
-                <button id="btn-logout" style="background-color: #ff4d4d; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">Cerrar Sesión</button>
+            <button id="btn-logout" class="btn-logout">Cerrar Sesión</button>
+            <div style="text-align: left; margin-bottom: 20px;">
+                <label><strong>Filtrar por Fecha:</strong></label>
+                <input type="date" id="filtro-fecha" style="width: 100%; padding: 10px;">
             </div>
-
-            <div class="campo">
-                <label for="filtro-fecha">Filtrar por fecha:</label>
-                <input type="date" id="filtro-fecha">
-            </div>
-
-            <div id="contenedor-tabla">
-                </div>
+            <h3 id="total-turnos" style="color: #003366;">Cargando...</h3>
+            <div id="contenedor-tabla"></div>
         </div>
     </main>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    
     <script src="script.js" defer></script>
 </body>
 </html>
