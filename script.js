@@ -1,4 +1,4 @@
-// script.js - VERSIÓN CON VISOR Y DESCARGA
+// script.js - VERSIÓN TABLAS COMPLETAS (Nombre, DNI y Trámite)
 const firebaseConfig = {
     apiKey: "AIzaSyBTLZI20dEdAbcnxlZ1YnvMz3twmhyvH_A",
     authDomain: "turnos-pna-parana-nuevo.firebaseapp.com",
@@ -18,16 +18,12 @@ const feriados = ["2026-01-01", "2026-02-16", "2026-02-17", "2026-03-24", "2026-
 let turnosTomados = [];
 const ruta = window.location.pathname;
 
-// --- LÓGICA DE DESCARGA (CSV para Excel) ---
+// --- LÓGICA DE DESCARGA CSV ---
 function descargarCSV(fecha) {
     const lista = turnosTomados.filter(t => t.fecha === fecha).sort((a,b) => a.horario.localeCompare(b.horario));
-    if (lista.length === 0) return alert("No hay turnos para descargar en esta fecha.");
-
+    if (lista.length === 0) return alert("No hay turnos para descargar.");
     let csvContent = "data:text/csv;charset=utf-8,HORA,NOMBRE,DNI,TRAMITE\n";
-    lista.forEach(t => {
-        csvContent += `${t.horario},${t.nombre},${t.dni},${t.tramite}\n`;
-    });
-
+    lista.forEach(t => { csvContent += `${t.horario},${t.nombre},${t.dni},${t.tramite}\n`; });
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -36,7 +32,49 @@ function descargarCSV(fecha) {
     link.click();
 }
 
-// --- INICIALIZACIÓN SEGÚN PÁGINA ---
+// --- DIBUJAR TABLA (ADMIN Y VISOR) ---
+function dibujarTabla(f, conAcciones) {
+    const idCont = conAcciones ? 'contenedor-tabla' : 'contenedor-tabla-visor';
+    const idTotal = conAcciones ? 'total-turnos' : 'total-turnos-visor';
+    const cont = document.getElementById(idCont);
+    if (!cont) return;
+
+    const hoy = new Date().toISOString().split('T')[0];
+    const fecha = f || hoy;
+    const lista = turnosTomados.filter(t => t.fecha === fecha).sort((a,b) => a.horario.localeCompare(b.horario));
+    
+    document.getElementById(idTotal).textContent = `Turnos (${fecha}): ${lista.length}`;
+    
+    // TABLA CON MÁS COLUMNAS
+    let html = `
+        <table class="tabla-turnos">
+            <thead>
+                <tr>
+                    <th>Hora</th>
+                    <th>Nombre</th>
+                    <th>DNI</th>
+                    <th>Trámite</th>
+                    ${conAcciones ? '<th>Acción</th>' : ''}
+                </tr>
+            </thead>
+            <tbody>`;
+
+    lista.forEach(t => {
+        html += `
+            <tr>
+                <td><strong>${t.horario}</strong></td>
+                <td>${t.nombre}</td>
+                <td>${t.dni}</td>
+                <td style="font-size: 12px;">${t.tramite}</td>
+                ${conAcciones ? `<td><button class="btn-eliminar-admin" onclick="borrarT('${t.id}')">Eliminar</button></td>` : ''}
+            </tr>`;
+    });
+
+    html += '</tbody></table>';
+    cont.innerHTML = html;
+}
+
+// --- INICIALIZACIÓN ---
 if (ruta.includes('admin.html')) {
     const PIN = "PNA2025parana";
     const initAdmin = () => {
@@ -66,51 +104,53 @@ if (ruta.includes('admin.html')) {
     fVisor.onchange = (e) => dibujarTabla(e.target.value, false);
 
 } else {
-    // Lógica del index.html (Solicitud de turnos) - Igual que antes
+    // LÓGICA INDEX.HTML
     const fInput = document.getElementById('fecha-turno');
     const mañana = new Date(); mañana.setDate(mañana.getDate() + 1);
-    fInput.setAttribute('min', mañana.toISOString().split('T')[0]);
-    fInput.onchange = (e) => { generarHorarios(e.target.value); };
+    if(fInput) fInput.setAttribute('min', mañana.toISOString().split('T')[0]);
+
+    const validarBoton = () => {
+        const btn = document.getElementById('boton-solicitar');
+        if (!btn) return;
+        const campos = ['tipo-tramite', 'fecha-turno', 'horario-turno', 'nombre-solicitante', 'dni-solicitante', 'correo-solicitante'];
+        btn.disabled = campos.some(id => !document.getElementById(id)?.value.trim());
+    };
+
+    if(fInput) fInput.onchange = (e) => { generarHorarios(e.target.value); validarBoton(); };
+    document.querySelectorAll('input, select').forEach(el => el.oninput = validarBoton);
+
     coleccionTurnos.onSnapshot(snap => {
         turnosTomados = snap.docs.map(d => ({id: d.id, ...d.data()}));
-        if (fInput.value) generarHorarios(fInput.value);
+        if (fInput?.value) generarHorarios(fInput.value);
     });
-    // ... (resto de funciones validarBoton, generarHorarios y solicitar que ya tenías)
+
+    document.getElementById('boton-solicitar').onclick = async () => {
+        const btn = document.getElementById('boton-solicitar');
+        btn.disabled = true;
+        const data = {
+            tramite: document.getElementById('tipo-tramite').value,
+            fecha: fInput.value,
+            horario: document.getElementById('horario-turno').value,
+            nombre: document.getElementById('nombre-solicitante').value.trim(),
+            dni: document.getElementById('dni-solicitante').value.trim(),
+            correo: document.getElementById('correo-solicitante').value.trim(),
+            creado: new Date().toLocaleString('es-AR')
+        };
+        try { await coleccionTurnos.add(data); alert("✅ Turno Confirmado"); location.reload(); }
+        catch (e) { alert("Error"); btn.disabled = false; }
+    };
 }
 
-function dibujarTabla(f, conAcciones) {
-    const idCont = conAcciones ? 'contenedor-tabla' : 'contenedor-tabla-visor';
-    const idTotal = conAcciones ? 'total-turnos' : 'total-turnos-visor';
-    const cont = document.getElementById(idCont);
-    const hoy = new Date().toISOString().split('T')[0];
-    const fecha = f || hoy;
-    const lista = turnosTomados.filter(t => t.fecha === fecha).sort((a,b) => a.horario.localeCompare(b.horario));
-    
-    document.getElementById(idTotal).textContent = `Turnos (${fecha}): ${lista.length}`;
-    
-    let html = '<table class="tabla-turnos"><thead><tr><th>Hora</th><th>Nombre</th>' + (conAcciones ? '<th>Acción</th>' : '') + '</tr></thead><tbody>';
-    lista.forEach(t => {
-        html += `<tr><td>${t.horario}</td><td>${t.nombre}</td>`;
-        if (conAcciones) html += `<td><button class="btn-eliminar-admin" onclick="borrarT('${t.id}')">Eliminar</button></td>`;
-        html += `</tr>`;
-    });
-    cont.innerHTML = html + '</tbody></table>';
-}
-
-window.borrarT = async (id) => { if (confirm("¿Eliminar turno?")) await coleccionTurnos.doc(id).delete(); };
-
-// --- FUNCIÓN GENERAR HORARIOS (Pegar aquí la que ya tenías corregida) ---
 function generarHorarios(fechaSeleccionada) {
     const select = document.getElementById('horario-turno');
     const err = document.getElementById('mensaje-error');
     if (!select) return;
-    select.innerHTML = '<option value="">-- Seleccione un Horario --</option>';
+    select.innerHTML = '<option value="">-- Seleccione --</option>';
     select.disabled = true;
     if (err) err.style.display = 'none';
     if (!fechaSeleccionada) return;
     const fechaObj = new Date(fechaSeleccionada + 'T00:00:00');
-    const diaSemana = fechaObj.getDay(); 
-    if (feriados.includes(fechaSeleccionada) || diaSemana === 0 || diaSemana === 6) {
+    if (feriados.includes(fechaSeleccionada) || fechaObj.getDay() === 0 || fechaObj.getDay() === 6) {
         if (err) { err.textContent = "Día no hábil."; err.style.display = 'block'; }
         return;
     }
@@ -127,3 +167,5 @@ function generarHorarios(fechaSeleccionada) {
     }
     select.disabled = false;
 }
+
+window.borrarT = async (id) => { if (confirm("¿Eliminar turno?")) await coleccionTurnos.doc(id).delete(); };
