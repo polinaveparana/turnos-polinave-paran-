@@ -7,126 +7,125 @@ const firebaseConfig = {
     appId: "1:1026768851982:web:6f6bfdd3bb3dc3d2b4585f"
 };
 
-if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const coleccionTurnos = db.collection('turnosPNA');
 
 const HORA_INICIO = 7, HORA_FIN = 13, INTERVALO = 15;
+const feriados = ["2025-01-01", "2025-03-03", "2025-03-04", "2025-03-24", "2025-04-02", "2025-04-18", "2025-05-01", "2025-05-25", "2025-06-16", "2025-06-20", "2025-06-30", "2025-07-09", "2025-08-15", "2025-10-13", "2025-11-24", "2025-12-08", "2025-12-25"];
+
 let turnosTomados = [];
 const esAdmin = window.location.pathname.includes('admin.html');
 
-// --- FUNCIONES CLIENTE ---
-function configurarFechaMinima() {
-    const inputF = document.getElementById('fecha-turno');
-    if (inputF) {
-        const hoy = new Date();
-        inputF.setAttribute('min', hoy.toISOString().split('T')[0]);
-    }
+function validarBoton() {
+    const btn = document.getElementById('boton-solicitar');
+    if (!btn) return;
+    const campos = ['tipo-tramite', 'fecha-turno', 'horario-turno', 'nombre-solicitante', 'dni-solicitante', 'correo-solicitante'];
+    btn.disabled = campos.some(id => !document.getElementById(id)?.value.trim());
 }
 
-function generarHorariosDisponibles(fechaSeleccionada) {
-    const selectH = document.getElementById('horario-turno');
-    if (!selectH) return;
-    selectH.innerHTML = '<option value="">-- Seleccione un Horario --</option>';
-    
-    const fechaObj = new Date(fechaSeleccionada + 'T00:00:00');
-    if (fechaObj.getDay() === 0 || fechaObj.getDay() === 6) {
-        alert("Los fines de semana no hay atención al público.");
+function generarHorarios(fecha) {
+    const select = document.getElementById('horario-turno');
+    const err = document.getElementById('mensaje-error');
+    if (!select) return;
+    select.innerHTML = '<option value="">-- Seleccione un Horario --</option>';
+    select.disabled = true;
+    if (err) err.style.display = 'none';
+
+    if (!fecha) return;
+    const fechaObj = new Date(fecha + 'T00:00:00');
+    if (fechaObj.getDay() === 0 || fechaObj.getDay() === 6 || feriados.includes(fecha)) {
+        if (err) { err.textContent = "Fecha no disponible (Feriado o Fin de Semana)"; err.style.display = 'block'; }
         return;
     }
 
-    for (let h = HORA_INICIO; h < HORA_FIN; h++) {
+    for (let h = HORA_INICIO; h <= HORA_FIN; h++) {
         for (let m = 0; m < 60; m += INTERVALO) {
-            const hhmm = ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')};
-            const ocupado = turnosTomados.some(t => t.fecha === fechaSeleccionada && t.horario === hhmm);
-            if (!ocupado) {
-                selectH.add(new Option(hhmm, hhmm));
+            if (h === HORA_FIN && m > 0) break;
+            const hhmm = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+            if (!turnosTomados.some(t => t.fecha === fecha && t.horario === hhmm)) {
+                const opt = document.createElement('option');
+                opt.value = hhmm; opt.textContent = hhmm;
+                select.appendChild(opt);
             }
         }
     }
-    selectH.disabled = false;
+    select.disabled = false;
 }
 
-// --- FUNCIONES ADMIN ---
-function dibujarTablaAdmin(fechaFiltro) {
-    const contenedor = document.getElementById('contenedor-tabla');
-    if (!contenedor) return;
-    const hoy = new Date().toISOString().split('T')[0];
-    const fechaVer = fechaFiltro || hoy;
-    const filtrados = turnosTomados.filter(t => t.fecha === fechaVer).sort((a,b) => a.horario.localeCompare(b.horario));
-    
-    document.getElementById('total-turnos').textContent = Turnos del día (${fechaVer}): ${filtrados.length};
-    
-    let html = <table class="tabla-turnos"><thead><tr><th>Hora</th><th>Nombre</th><th>DNI</th><th>Acción</th></tr></thead><tbody>;
-    filtrados.forEach(t => {
-        html += <tr><td>${t.horario}</td><td>${t.nombre}</td><td>${t.dni}</td><td><button class="btn-eliminar-admin" onclick="eliminarTurno('${t.id}')">Eliminar</button></td></tr>;
-    });
-    contenedor.innerHTML = html + "</tbody></table>";
-}
+if (esAdmin) {
+    const PIN = "PNA2025parana";
+    const loginArea = document.getElementById('area-login');
+    const dashArea = document.getElementById('dashboard-contenido');
 
-async function eliminarTurno(id) {
-    if (confirm("¿Desea eliminar o marcar como atendido este turno?")) {
-        await coleccionTurnos.doc(id).delete();
-    }
-}
+    const initAdmin = () => {
+        loginArea.style.display = 'none';
+        dashArea.style.display = 'block';
+        coleccionTurnos.onSnapshot(snap => {
+            turnosTomados = snap.docs.map(d => ({id: d.id, ...d.data()}));
+            dibujarTabla(document.getElementById('filtro-fecha').value);
+        });
+    };
 
-function exportarExcel() {
-    const fecha = document.getElementById('filtro-fecha').value || new Date().toISOString().split('T')[0];
-    const filtrados = turnosTomados.filter(t => t.fecha === fecha).map(t => ({
-        Horario: t.horario, Nombre: t.nombre, DNI: t.dni, Tramite: t.tramite, Correo: t.correo
-    }));
-    if (filtrados.length === 0) return alert("No hay turnos para exportar en esta fecha.");
-    
-    const hoja = XLSX.utils.json_to_sheet(filtrados);
-    const libro = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(libro, hoja, "Turnos");
-    XLSX.writeFile(libro, Turnos_PNA_${fecha}.xlsx);
-}
+    if (localStorage.getItem('admin_pna_auth') === 'true') initAdmin();
 
-// --- INICIALIZACIÓN ---
-document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('btn-login').onclick = () => {
+        if (document.getElementById('admin-pin').value === PIN) {
+            localStorage.setItem('admin_pna_auth', 'true');
+            initAdmin();
+        } else alert("PIN Incorrecto");
+    };
+
+    document.getElementById('btn-logout').onclick = () => {
+        localStorage.removeItem('admin_pna_auth');
+        location.reload();
+    };
+
+    document.getElementById('filtro-fecha').onchange = (e) => dibujarTabla(e.target.value);
+} else {
+    const fInput = document.getElementById('fecha-turno');
+    const mañana = new Date(); mañana.setDate(mañana.getDate() + 1);
+    fInput.setAttribute('min', mañana.toISOString().split('T')[0]);
+
+    fInput.onchange = (e) => { generarHorarios(e.target.value); validarBoton(); };
+    document.querySelectorAll('input, select').forEach(el => el.oninput = validarBoton);
+
     coleccionTurnos.onSnapshot(snap => {
         turnosTomados = snap.docs.map(d => ({id: d.id, ...d.data()}));
-        if (esAdmin) dibujarTablaAdmin(document.getElementById('filtro-fecha')?.value);
+        if (fInput.value) generarHorarios(fInput.value);
     });
 
-    if (esAdmin) {
-        const PIN = "PNA2025parana";
-        const panelLogin = () => {
-            document.getElementById('area-login').style.display = 'none';
-            document.getElementById('dashboard-contenido').style.display = 'block';
+    document.getElementById('boton-solicitar').onclick = async () => {
+        const btn = document.getElementById('boton-solicitar');
+        btn.disabled = true;
+        const data = {
+            tramite: document.getElementById('tipo-tramite').value,
+            fecha: fInput.value,
+            horario: document.getElementById('horario-turno').value,
+            nombre: document.getElementById('nombre-solicitante').value.trim(),
+            dni: document.getElementById('dni-solicitante').value.trim(),
+            correo: document.getElementById('correo-solicitante').value.trim(),
+            creado: new Date().toLocaleString('es-AR')
         };
-        if(localStorage.getItem('admin_pna') === 'true') panelLogin();
-        
-        document.getElementById('btn-login').onclick = () => {
-            if(document.getElementById('admin-pin').value === PIN) {
-                localStorage.setItem('admin_pna', 'true'); panelLogin();
-            } else alert("PIN incorrecto");
-        };
-        document.getElementById('btn-logout').onclick = () => { localStorage.clear(); location.reload(); };
-        document.getElementById('btn-excel').onclick = exportarExcel;
-        document.getElementById('filtro-fecha').onchange = (e) => dibujarTablaAdmin(e.target.value);
-    } else {
-        configurarFechaMinima();
-        document.getElementById('fecha-turno').onchange = (e) => generarHorariosDisponibles(e.target.value);
-        document.getElementById('formulario-turnos').oninput = () => {
-            document.getElementById('boton-solicitar').disabled = !document.getElementById('formulario-turnos').checkValidity();
-        };
-        document.getElementById('boton-solicitar').onclick = async () => {
-            const data = {
-                tramite: document.getElementById('tipo-tramite').value,
-                fecha: document.getElementById('fecha-turno').value,
-                horario: document.getElementById('horario-turno').value,
-                nombre: document.getElementById('nombre-solicitante').value.trim(),
-                dni: document.getElementById('dni-solicitante').value.trim(),
-                correo: document.getElementById('correo-solicitante').value.trim(),
-                registradoEn: new Date().toLocaleString('es-AR')
-            };
-            try {
-                await coleccionTurnos.add(data);
-                alert("✅ Turno solicitado con éxito.");
-                location.reload();
-            } catch (e) { alert("Error al conectar con la base de datos."); }
-        };
-    }
-});
+        try {
+            await coleccionTurnos.add(data);
+            alert("✅ Turno Confirmado exitosamente.");
+            location.reload();
+        } catch (e) { alert("Error al guardar"); btn.disabled = false; }
+    };
+}
+
+function dibujarTabla(f) {
+    const cont = document.getElementById('contenedor-tabla');
+    const hoy = new Date().toISOString().split('T')[0];
+    const fecha = f || hoy;
+    const lista = turnosTomados.filter(t => t.fecha === fecha).sort((a,b) => a.horario.localeCompare(b.horario));
+    document.getElementById('total-turnos').textContent = `Total (${fecha}): ${lista.length}`;
+    let html = '<table class="tabla-turnos"><thead><tr><th>Hora</th><th>Nombre</th><th>Acción</th></tr></thead><tbody>';
+    lista.forEach(t => {
+        html += `<tr><td>${t.horario}</td><td>${t.nombre}</td><td><button class="btn-eliminar-admin" onclick="borrarT('${t.id}')">Atendido/Eliminar</button></td></tr>`;
+    });
+    cont.innerHTML = html + '</tbody></table>';
+}
+
+window.borrarT = async (id) => { if (confirm("¿Eliminar turno?")) await coleccionTurnos.doc(id).delete(); };
