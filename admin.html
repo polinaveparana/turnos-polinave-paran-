@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin - PNA Paraná</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Administración PNA</h1>
+        <p>Prefectura Naval Paraná - Control de Turnos</p>
+    </header>
+
+    <main class="contenedor-admin">
+        <div id="area-login">
+            <h3>Acceso Restringido</h3>
+            <p>Ingrese el PIN de seguridad para gestionar los turnos.</p>
+            <input type="password" id="admin-pin" placeholder="PIN de Seguridad">
+            <button id="btn-login">Ingresar al Panel</button>
+            <div id="login-error" style="color: red; display: none; margin-top: 10px;">PIN Incorrecto</div>
+        </div>
+
+        <div id="dashboard-contenido" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 id="total-turnos" style="margin: 0;">Cargando turnos...</h3>
+                <button id="btn-logout" style="background-color: #ff4d4d; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">Cerrar Sesión</button>
+            </div>
+
+            <div class="campo">
+                <label for="filtro-fecha">Filtrar por fecha:</label>
+                <input type="date" id="filtro-fecha">
+            </div>
+
+            <div id="contenedor-tabla">
+                </div>
+        </div>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    
+    <script src="script.js" defer></script>
+</body>
+</html>
