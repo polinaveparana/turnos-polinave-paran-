@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Turnos Online - Prefectura Paraná</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Turnos Online - Prefectura Paraná</h1>
+        <p>Oficina de Policía de Seguridad de la Navegación</p>
+    </header>
+
+    <main class="contenedor-turnos">
+        <h2>Solicitud de Turno</h2>
+        <div id="mensaje-exito" class="mensaje exito" style="display: none;"></div>
+        <div id="mensaje-error" class="mensaje error" style="display: none;"></div>
+
+        <form id="formulario-turnos">
+            <div class="campo">
+                <label for="tipo-tramite">Tipo de Trámite a realizar:</label>
+                <select id="tipo-tramite" required>
+                    <option value="">-- Seleccione un Trámite --</option>
+                    <option value="inscripcion_rey_para">Inscripción de embarcación REY/PARA</option>
+                    <option value="transferencia_rey_para">Transferencia de embarcaciones REY/PARA</option>
+                    <option value="cambio_motor_nombre">Cambio de motor/nombre.</option>
+                    <option value="carnet_habilitacion">Carnet náutico (habilitación).</option>
+                    <option value="carnet_renovacion">Carnet náutico (renovación).</option>
+                    <option value="carnet_cambio_categoria">Carnet náutico (cambio de categoría).</option>
+                    <option value="marina_mercante">Trámites de la marina mercante.</option>
+                    <option value="otros">Otros.</option>
+                </select>
+            </div>
+
+            <div class="campo">
+                <label for="fecha-turno">Seleccione el Día:</label>
+                <input type="date" id="fecha-turno" required>
+            </div>
+
+            <div class="campo">
+                <label for="horario-turno">Horarios Disponibles (7:00 a 13:00):</label>
+                <select id="horario-turno" disabled required>
+                    <option value="">-- Seleccione una Fecha Primero --</option>
+                </select>
+            </div>
+
+            <h3>Datos del Solicitante</h3>
+            <div class="campo">
+                <label for="nombre-solicitante">Nombre Completo:</label>
+                <input type="text" id="nombre-solicitante" placeholder="Ej: Juan Pérez" required>
+            </div>
+            <div class="campo">
+                <label for="dni-solicitante">DNI (sin puntos):</label>
+                <input type="number" id="dni-solicitante" placeholder="Ej: 30123456" required>
+            </div>
+            <div class="campo">
+                <label for="correo-solicitante">Correo Electrónico:</label>
+                <input type="email" id="correo-solicitante" placeholder="Ej: ejemplo@correo.com" required>
+            </div>
+
+            <button type="button" id="boton-solicitar" disabled>Solicitar Turno</button>
+        </form>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="script.js" defer></script>
+</body>
+</html>
