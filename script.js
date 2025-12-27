@@ -1,4 +1,4 @@
-// script.js - VERSIÓN OFICIAL (Cuenta Polinave)
+// script.js - VERSIÓN FINAL OFICIAL (Cuenta Polinave PNA)
 const firebaseConfig = {
     apiKey: "AIzaSyDKTwF1m_kejyna5sN6wyBOO32A31hCl8o",
     authDomain: "turnos-pna-oficial-2.firebaseapp.com",
@@ -8,7 +8,7 @@ const firebaseConfig = {
     appId: "1:353332868164:web:147479d2108e27753bb811"
 };
 
-// Inicialización
+// Inicialización de Firebase
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth(); 
@@ -20,7 +20,7 @@ const feriados = ["2026-01-01", "2026-02-16", "2026-02-17", "2026-03-24", "2026-
 let turnosTomados = [];
 const ruta = window.location.pathname;
 
-// --- DIBUJAR TABLA ---
+// --- FUNCIÓN DIBUJAR TABLA (ADMIN Y VISOR) ---
 function dibujarTabla(f, conAcciones) {
     const idCont = conAcciones ? 'contenedor-tabla' : 'contenedor-tabla-visor';
     const idTotal = conAcciones ? 'total-turnos' : 'total-turnos-visor';
@@ -40,7 +40,7 @@ function dibujarTabla(f, conAcciones) {
     cont.innerHTML = html + '</tbody></table>';
 }
 
-// --- INICIALIZACIÓN POR RUTA ---
+// --- LÓGICA POR PÁGINA ---
 if (ruta.includes('admin.html')) {
     const initAdmin = () => {
         document.getElementById('area-login').style.display = 'none';
@@ -59,22 +59,24 @@ if (ruta.includes('admin.html')) {
         try {
             await auth.signInWithEmailAndPassword(email, pass);
             initAdmin();
-        } catch (e) { alert("Error: Usuario o contraseña incorrectos."); }
+        } catch (e) { alert("Acceso denegado: Usuario o contraseña incorrectos."); }
     };
 
     document.getElementById('btn-logout').onclick = () => { auth.signOut().then(() => location.reload()); };
     document.getElementById('filtro-fecha').onchange = (e) => dibujarTabla(e.target.value, true);
+    
     document.getElementById('btn-descargar').onclick = () => {
         const fecha = document.getElementById('filtro-fecha').value || new Date().toISOString().split('T')[0];
         const lista = turnosTomados.filter(t => t.fecha === fecha).sort((a,b) => a.horario.localeCompare(b.horario));
-        if (lista.length === 0) return alert("No hay turnos.");
+        if (lista.length === 0) return alert("No hay turnos para descargar.");
         let csvContent = "data:text/csv;charset=utf-8,HORA,NOMBRE,DNI,TRAMITE\n";
         lista.forEach(t => { csvContent += `${t.horario},${t.nombre},${t.dni},${t.tramite}\n`; });
         const link = document.createElement("a");
         link.setAttribute("href", encodeURI(csvContent));
-        link.setAttribute("download", `turnos_${fecha}.csv`);
+        link.setAttribute("download", `turnos_pna_${fecha}.csv`);
         document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
     };
 
 } else if (ruta.includes('visor.html')) {
@@ -87,8 +89,9 @@ if (ruta.includes('admin.html')) {
         });
         fVisor.onchange = (e) => dibujarTabla(e.target.value, false);
     }
+
 } else {
-    // LÓGICA INDEX.HTML
+    // LÓGICA INDEX.HTML (Público)
     const fInput = document.getElementById('fecha-turno');
     const mañana = new Date(); mañana.setDate(mañana.getDate() + 1);
     if(fInput) fInput.setAttribute('min', mañana.toISOString().split('T')[0]);
@@ -122,16 +125,16 @@ if (ruta.includes('admin.html')) {
         };
         try { 
             await coleccionTurnos.add(data); 
-            // Envío gratuito via Google Apps Script
+            // Envío de correo mediante el Script de Google
             fetch("https://script.google.com/macros/s/AKfycbyjMXTqTetcLfD0a9URH9zQr-h0O6QcadSYDxQFaILG3ec2hYAZGmxHrqRLXXVSOzPn/exec", {
                 method: "POST",
                 mode: "no-cors",
                 body: JSON.stringify(data)
             });
-            alert("✅ Turno Confirmado. Recibirás un correo."); 
+            alert("✅ Turno Confirmado. Se ha enviado un correo con los detalles."); 
             location.reload(); 
         }
-        catch (e) { alert("Error al guardar."); btn.disabled = false; }
+        catch (e) { alert("Error al solicitar el turno."); btn.disabled = false; }
     };
 }
 
