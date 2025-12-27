@@ -1,16 +1,17 @@
-// script.js - VERSIÓN FINAL: SEGURIDAD PRO Y ENVÍO INDEPENDIENTE
+// script.js - VERSIÓN OFICIAL (Cuenta Polinave)
 const firebaseConfig = {
-    apiKey: "AIzaSyBTLZI20dEdAbcnxlZ1YnvMz3twmhyvH_A",
-    authDomain: "turnos-pna-parana-nuevo.firebaseapp.com",
-    projectId: "turnos-pna-parana-nuevo",
-    storageBucket: "turnos-pna-parana-nuevo.firebasestorage.app",
-    messagingSenderId: "1026768851982",
-    appId: "1:1026768851982:web:6f6bfdd3bb3dc3d2b4585f"
+    apiKey: "AIzaSyDKTwF1m_kejyna5sN6wyBOO32A31hCl8o",
+    authDomain: "turnos-pna-oficial-2.firebaseapp.com",
+    projectId: "turnos-pna-oficial-2",
+    storageBucket: "turnos-pna-oficial-2.firebasestorage.app",
+    messagingSenderId: "353332868164",
+    appId: "1:353332868164:web:147479d2108e27753bb811"
 };
 
+// Inicialización
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-const auth = firebase.auth(); // Módulo de autenticación
+const auth = firebase.auth(); 
 const coleccionTurnos = db.collection('turnosPNA');
 
 const HORA_INICIO = 7, HORA_FIN = 13, INTERVALO = 15;
@@ -18,20 +19,6 @@ const feriados = ["2026-01-01", "2026-02-16", "2026-02-17", "2026-03-24", "2026-
 
 let turnosTomados = [];
 const ruta = window.location.pathname;
-
-// --- LÓGICA DE DESCARGA CSV ---
-function descargarCSV(fecha) {
-    const lista = turnosTomados.filter(t => t.fecha === fecha).sort((a,b) => a.horario.localeCompare(b.horario));
-    if (lista.length === 0) return alert("No hay turnos para descargar.");
-    let csvContent = "data:text/csv;charset=utf-8,HORA,NOMBRE,DNI,TRAMITE\n";
-    lista.forEach(t => { csvContent += `${t.horario},${t.nombre},${t.dni},${t.tramite}\n`; });
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `turnos_pna_${fecha}.csv`);
-    document.body.appendChild(link);
-    link.click();
-}
 
 // --- DIBUJAR TABLA ---
 function dibujarTabla(f, conAcciones) {
@@ -53,7 +40,7 @@ function dibujarTabla(f, conAcciones) {
     cont.innerHTML = html + '</tbody></table>';
 }
 
-// --- INICIALIZACIÓN ---
+// --- INICIALIZACIÓN POR RUTA ---
 if (ruta.includes('admin.html')) {
     const initAdmin = () => {
         document.getElementById('area-login').style.display = 'none';
@@ -64,37 +51,44 @@ if (ruta.includes('admin.html')) {
         });
     };
 
-    // Verificar si ya hay una sesión activa
     auth.onAuthStateChanged(user => { if (user) initAdmin(); });
 
-    // Botón de Login con Usuario/Pass
     document.getElementById('btn-login').onclick = async () => {
         const email = document.getElementById('admin-email').value;
         const pass = document.getElementById('admin-password').value;
         try {
             await auth.signInWithEmailAndPassword(email, pass);
             initAdmin();
-        } catch (e) { alert("Acceso denegado: Usuario o contraseña incorrectos."); }
+        } catch (e) { alert("Error: Usuario o contraseña incorrectos."); }
     };
 
-    document.getElementById('btn-logout').onclick = () => { 
-        auth.signOut().then(() => { location.reload(); });
-    };
-    
+    document.getElementById('btn-logout').onclick = () => { auth.signOut().then(() => location.reload()); };
     document.getElementById('filtro-fecha').onchange = (e) => dibujarTabla(e.target.value, true);
-    document.getElementById('btn-descargar').onclick = () => descargarCSV(document.getElementById('filtro-fecha').value || new Date().toISOString().split('T')[0]);
+    document.getElementById('btn-descargar').onclick = () => {
+        const fecha = document.getElementById('filtro-fecha').value || new Date().toISOString().split('T')[0];
+        const lista = turnosTomados.filter(t => t.fecha === fecha).sort((a,b) => a.horario.localeCompare(b.horario));
+        if (lista.length === 0) return alert("No hay turnos.");
+        let csvContent = "data:text/csv;charset=utf-8,HORA,NOMBRE,DNI,TRAMITE\n";
+        lista.forEach(t => { csvContent += `${t.horario},${t.nombre},${t.dni},${t.tramite}\n`; });
+        const link = document.createElement("a");
+        link.setAttribute("href", encodeURI(csvContent));
+        link.setAttribute("download", `turnos_${fecha}.csv`);
+        document.body.appendChild(link);
+        link.click();
+    };
 
 } else if (ruta.includes('visor.html')) {
     const fVisor = document.getElementById('filtro-fecha-visor');
-    fVisor.value = new Date().toISOString().split('T')[0];
-    coleccionTurnos.onSnapshot(snap => {
-        turnosTomados = snap.docs.map(d => ({id: d.id, ...d.data()}));
-        dibujarTabla(fVisor.value, false);
-    });
-    fVisor.onchange = (e) => dibujarTabla(e.target.value, false);
-
+    if(fVisor) {
+        fVisor.value = new Date().toISOString().split('T')[0];
+        coleccionTurnos.onSnapshot(snap => {
+            turnosTomados = snap.docs.map(d => ({id: d.id, ...d.data()}));
+            dibujarTabla(fVisor.value, false);
+        });
+        fVisor.onchange = (e) => dibujarTabla(e.target.value, false);
+    }
 } else {
-    // LÓGICA INDEX.HTML (Público)
+    // LÓGICA INDEX.HTML
     const fInput = document.getElementById('fecha-turno');
     const mañana = new Date(); mañana.setDate(mañana.getDate() + 1);
     if(fInput) fInput.setAttribute('min', mañana.toISOString().split('T')[0]);
@@ -128,13 +122,13 @@ if (ruta.includes('admin.html')) {
         };
         try { 
             await coleccionTurnos.add(data); 
-            // ENVÍO POR TU GOOGLE APPS SCRIPT
+            // Envío gratuito via Google Apps Script
             fetch("https://script.google.com/macros/s/AKfycbyjMXTqTetcLfD0a9URH9zQr-h0O6QcadSYDxQFaILG3ec2hYAZGmxHrqRLXXVSOzPn/exec", {
                 method: "POST",
                 mode: "no-cors",
                 body: JSON.stringify(data)
             });
-            alert("✅ Turno Confirmado. Se ha enviado un correo."); 
+            alert("✅ Turno Confirmado. Recibirás un correo."); 
             location.reload(); 
         }
         catch (e) { alert("Error al guardar."); btn.disabled = false; }
