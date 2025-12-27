@@ -2,25 +2,20 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visor de Turnos - PNA</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header>
-        <h1>Visor de Turnos</h1>
-        <p>Prefectura Naval Paraná</p>
-    </header>
-    <main class="contenedor-admin">
-        <label><strong>Consultar Fecha:</strong></label>
-        <input type="date" id="filtro-fecha-visor" style="width: 100%; padding: 10px; margin-bottom: 15px;">
-        
-        <h3 id="total-turnos-visor">Cargando turnos...</h3>
+    <div class="contenedor-visor">
+        <h2>Panel de Visualización de Turnos</h2>
+        <input type="date" id="filtro-fecha-visor">
+        <div id="total-turnos-visor">Cargando...</div>
         <div id="contenedor-tabla-visor"></div>
-    </main>
+    </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="script.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
