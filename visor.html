@@ -3,31 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visor de Turnos - PNA</title>
+    <title>Visor de Turnos - Prefectura Paraná</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Estilos rápidos para que el visor se vea bien */
-        body { font-family: sans-serif; background-color: #f4f7f6; padding: 20px; }
-        .contenedor-visor { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h2 { color: #003366; text-align: center; border-bottom: 2px solid #003366; padding-bottom: 10px; }
-        #filtro-fecha-visor { display: block; margin: 20px auto; padding: 10px; font-size: 16px; border-radius: 5px; border: 1px solid #ccc; }
-        #total-turnos-visor { text-align: center; font-weight: bold; margin-bottom: 15px; color: #555; }
-        .tabla-turnos { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .tabla-turnos th { background-color: #003366; color: white; padding: 12px; text-align: left; }
-        .tabla-turnos td { padding: 12px; border-bottom: 1px solid #eee; }
-        .tabla-turnos tr:nth-child(even) { background-color: #f9f9f9; }
+        /* ESTILOS ESPECÍFICOS PARA EL VISOR PROFESIONAL */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #e9ecef;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .contenedor-visor {
+            width: 100%;
+            max-width: 1000px;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-top: 8px solid #003366; /* Azul Prefectura */
+        }
+
+        h2 {
+            color: #003366;
+            text-align: center;
+            font-size: 28px;
+            margin-top: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .divisor {
+            height: 2px;
+            background: #eee;
+            margin: 20px 0;
+        }
+
+        .controles-visor {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        #filtro-fecha-visor {
+            padding: 12px 20px;
+            font-size: 18px;
+            border: 2px solid #003366;
+            border-radius: 8px;
+            outline: none;
+            color: #333;
+        }
+
+        #total-turnos-visor {
+            font-size: 20px;
+            font-weight: bold;
+            color: #555;
+            background: #f8f9fa;
+            padding: 10px 20px;
+            border-radius: 50px;
+            border: 1px solid #ddd;
+        }
+
+        /* DISEÑO DE LA TABLA */
+        .tabla-turnos {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 18px; /* Letra más grande para lectura fácil */
+        }
+
+        .tabla-turnos th {
+            background-color: #003366;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            text-transform: uppercase;
+            font-size: 14px;
+        }
+
+        .tabla-turnos td {
+            padding: 15px;
+            border-bottom: 1px solid #dee2e6;
+            color: #333;
+        }
+
+        .tabla-turnos tr:nth-child(even) {
+            background-color: #f2f4f6;
+        }
+
+        .tabla-turnos tr:hover {
+            background-color: #e2e6ea;
+        }
+
+        .tabla-turnos strong {
+            color: #003366;
+            font-size: 20px;
+        }
+
+        /* Estilo para cuando ya fueron atendidos */
+        tr[style*="background-color: #d4edda"] {
+            background-color: #d4edda !important;
+            color: #155724;
+        }
+
+        @media (max-width: 600px) {
+            .tabla-turnos { font-size: 14px; }
+            h2 { font-size: 20px; }
+        }
     </style>
 </head>
 <body>
 
     <div class="contenedor-visor">
-        <h2>Prefectura Naval Argentina - Turnos del Día</h2>
+        <h2>Prefectura Naval Argentina</h2>
+        <p style="text-align: center; color: #666; margin-top: -15px;">Visor de Turnos - Oficina Polinave Paraná</p>
         
-        <input type="date" id="filtro-fecha-visor">
+        <div class="divisor"></div>
+
+        <div class="controles-visor">
+            <label for="filtro-fecha-visor" style="font-weight: bold; color: #003366;">Seleccionar Fecha de Guardia:</label>
+            <input type="date" id="filtro-fecha-visor">
+            <div id="total-turnos-visor">Cargando...</div>
+        </div>
         
-        <div id="total-turnos-visor">Cargando turnos...</div>
+        <div id="contenedor-tabla-visor">
+            </div>
         
-        <div id="contenedor-tabla-visor"></div>
+        <div style="margin-top: 30px; text-align: center; font-size: 12px; color: #aaa;">
+            Sistema de Gestión de Turnos - PNA Oficial
+        </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
