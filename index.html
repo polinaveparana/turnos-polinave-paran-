@@ -3,46 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Admin - PNA Paraná</title>
+    <title>Turnos Online - Prefectura Paraná</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="admin-body">
+<body>
     <header>
-        <h1>Panel de Administración</h1>
-        <p>Prefectura Naval Paraná - Gestión de Turnos</p>
+        <h1>Turnos Online - Prefectura Paraná</h1>
+        <p>Oficina de Policía de Seguridad de la Navegación</p>
     </header>
 
-    <main class="contenedor-admin">
-        <div id="area-login" class="login-card">
-            <h3>Acceso Restringido</h3>
-            <p style="font-size: 0.9em; color: #666; margin-bottom: 20px;">Ingrese sus credenciales oficiales</p>
-            <input type="email" id="admin-email" placeholder="Correo Electrónico" style="width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px;">
-            <input type="password" id="admin-password" placeholder="Contraseña" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px;">
-            <button id="btn-login" class="btn-solicitar" style="width: 100%;">Ingresar al Panel</button>
-        </div>
+    <main class="contenedor-turnos">
+        <h2>Solicitud de Turno</h2>
+        <div id="mensaje-error" class="mensaje error" style="display: none;"></div>
 
-        <div id="dashboard-contenido" style="display: none;">
-            <div class="controles-admin">
-                <div class="filtro">
-                    <label>Filtrar por Fecha:</label>
-                    <input type="date" id="filtro-fecha">
-                </div>
-                <div class="acciones-admin">
-                    <button id="btn-descargar" class="btn-excel">📥 Descargar Planilla</button>
-                    <button id="btn-logout" class="btn-rojo">Cerrar Sesión</button>
-                </div>
+        <form id="formulario-turnos">
+            <div class="campo">
+                <label for="tipo-tramite">Tipo de Trámite a realizar:</label>
+                <select id="tipo-tramite" required>
+                    <option value="">-- Seleccione un Trámite --</option>
+                    <option value="Inscripción REY/PARA">Inscripción de embarcación REY/PARA</option>
+                    <option value="Transferencia REY/PARA">Transferencia de embarcaciones REY/PARA</option>
+                    <option value="Cambio de motor/nombre">Cambio de motor/nombre.</option>
+                    <option value="Carnet náutico (habilitación)">Carnet náutico (habilitación).</option>
+                    <option value="Carnet náutico (renovación)">Carnet náutico (renovación).</option>
+                    <option value="Carnet náutico (categoría)">Carnet náutico (cambio de categoría).</option>
+                    <option value="Marina mercante">Trámites de la marina mercante.</option>
+                    <option value="Otros">Otros.</option>
+                </select>
             </div>
 
-            <h3 id="total-turnos">Cargando turnos...</h3>
-            <div id="contenedor-tabla">
-                </div>
-        </div>
+            <div class="campo">
+                <label for="fecha-turno">Seleccione el Día:</label>
+                <input type="date" id="fecha-turno" required>
+            </div>
+
+            <div class="campo">
+                <label for="horario-turno">Horarios Disponibles (7:00 a 13:00):</label>
+                <select id="horario-turno" disabled required>
+                    <option value="">-- Seleccione una Fecha Primero --</option>
+                </select>
+            </div>
+
+            <h3>Datos del Solicitante</h3>
+            <div class="campo">
+                <label for="nombre-solicitante">Nombre Completo:</label>
+                <input type="text" id="nombre-solicitante" placeholder="Ej: Juan Pérez" required>
+            </div>
+
+            <div class="campo">
+                <label for="dni-solicitante">DNI (sin puntos):</label>
+                <input type="number" id="dni-solicitante" placeholder="Ej: 30123456" required>
+            </div>
+
+            <div class="campo">
+                <label for="correo-solicitante">Correo Electrónico:</label>
+                <input type="email" id="correo-solicitante" placeholder="Ej: ejemplo@correo.com" required>
+            </div>
+            <button type="button" id="boton-solicitar" disabled>Solicitar Turno</button>
+        </form>
     </main>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    
     <script src="script.js" defer></script>
 </body>
 </html>
