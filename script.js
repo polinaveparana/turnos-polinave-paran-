@@ -1,4 +1,4 @@
-// script.js - VERSIÓN TABLAS COMPLETAS (Nombre, DNI y Trámite)
+// script.js - VERSIÓN FINAL: SEGURIDAD PRO Y ENVÍO INDEPENDIENTE
 const firebaseConfig = {
     apiKey: "AIzaSyBTLZI20dEdAbcnxlZ1YnvMz3twmhyvH_A",
     authDomain: "turnos-pna-parana-nuevo.firebaseapp.com",
@@ -10,6 +10,7 @@ const firebaseConfig = {
 
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const auth = firebase.auth(); // Módulo de autenticación
 const coleccionTurnos = db.collection('turnosPNA');
 
 const HORA_INICIO = 7, HORA_FIN = 13, INTERVALO = 15;
@@ -32,7 +33,7 @@ function descargarCSV(fecha) {
     link.click();
 }
 
-// --- DIBUJAR TABLA (ADMIN Y VISOR) ---
+// --- DIBUJAR TABLA ---
 function dibujarTabla(f, conAcciones) {
     const idCont = conAcciones ? 'contenedor-tabla' : 'contenedor-tabla-visor';
     const idTotal = conAcciones ? 'total-turnos' : 'total-turnos-visor';
@@ -45,38 +46,15 @@ function dibujarTabla(f, conAcciones) {
     
     document.getElementById(idTotal).textContent = `Turnos (${fecha}): ${lista.length}`;
     
-    // TABLA CON MÁS COLUMNAS
-    let html = `
-        <table class="tabla-turnos">
-            <thead>
-                <tr>
-                    <th>Hora</th>
-                    <th>Nombre</th>
-                    <th>DNI</th>
-                    <th>Trámite</th>
-                    ${conAcciones ? '<th>Acción</th>' : ''}
-                </tr>
-            </thead>
-            <tbody>`;
-
+    let html = `<table class="tabla-turnos"><thead><tr><th>Hora</th><th>Nombre</th><th>DNI</th><th>Trámite</th>${conAcciones ? '<th>Acción</th>' : ''}</tr></thead><tbody>`;
     lista.forEach(t => {
-        html += `
-            <tr>
-                <td><strong>${t.horario}</strong></td>
-                <td>${t.nombre}</td>
-                <td>${t.dni}</td>
-                <td style="font-size: 12px;">${t.tramite}</td>
-                ${conAcciones ? `<td><button class="btn-eliminar-admin" onclick="borrarT('${t.id}')">Eliminar</button></td>` : ''}
-            </tr>`;
+        html += `<tr><td><strong>${t.horario}</strong></td><td>${t.nombre}</td><td>${t.dni}</td><td style="font-size: 12px;">${t.tramite}</td>${conAcciones ? `<td><button class="btn-eliminar-admin" onclick="borrarT('${t.id}')">Eliminar</button></td>` : ''}</tr>`;
     });
-
-    html += '</tbody></table>';
-    cont.innerHTML = html;
+    cont.innerHTML = html + '</tbody></table>';
 }
 
 // --- INICIALIZACIÓN ---
 if (ruta.includes('admin.html')) {
-    const PIN = "PNA2025parana";
     const initAdmin = () => {
         document.getElementById('area-login').style.display = 'none';
         document.getElementById('dashboard-contenido').style.display = 'block';
@@ -85,12 +63,24 @@ if (ruta.includes('admin.html')) {
             dibujarTabla(document.getElementById('filtro-fecha').value, true);
         });
     };
-    if (localStorage.getItem('admin_pna_auth') === 'true') initAdmin();
-    document.getElementById('btn-login').onclick = () => {
-        if (document.getElementById('admin-pin').value === PIN) { localStorage.setItem('admin_pna_auth', 'true'); initAdmin(); }
-        else alert("PIN Incorrecto");
+
+    // Verificar si ya hay una sesión activa
+    auth.onAuthStateChanged(user => { if (user) initAdmin(); });
+
+    // Botón de Login con Usuario/Pass
+    document.getElementById('btn-login').onclick = async () => {
+        const email = document.getElementById('admin-email').value;
+        const pass = document.getElementById('admin-password').value;
+        try {
+            await auth.signInWithEmailAndPassword(email, pass);
+            initAdmin();
+        } catch (e) { alert("Acceso denegado: Usuario o contraseña incorrectos."); }
     };
-    document.getElementById('btn-logout').onclick = () => { localStorage.removeItem('admin_pna_auth'); location.reload(); };
+
+    document.getElementById('btn-logout').onclick = () => { 
+        auth.signOut().then(() => { location.reload(); });
+    };
+    
     document.getElementById('filtro-fecha').onchange = (e) => dibujarTabla(e.target.value, true);
     document.getElementById('btn-descargar').onclick = () => descargarCSV(document.getElementById('filtro-fecha').value || new Date().toISOString().split('T')[0]);
 
@@ -104,7 +94,7 @@ if (ruta.includes('admin.html')) {
     fVisor.onchange = (e) => dibujarTabla(e.target.value, false);
 
 } else {
-    // LÓGICA INDEX.HTML
+    // LÓGICA INDEX.HTML (Público)
     const fInput = document.getElementById('fecha-turno');
     const mañana = new Date(); mañana.setDate(mañana.getDate() + 1);
     if(fInput) fInput.setAttribute('min', mañana.toISOString().split('T')[0]);
@@ -136,8 +126,18 @@ if (ruta.includes('admin.html')) {
             correo: document.getElementById('correo-solicitante').value.trim(),
             creado: new Date().toLocaleString('es-AR')
         };
-        try { await coleccionTurnos.add(data); alert("✅ Turno Confirmado"); location.reload(); }
-        catch (e) { alert("Error"); btn.disabled = false; }
+        try { 
+            await coleccionTurnos.add(data); 
+            // ENVÍO POR TU GOOGLE APPS SCRIPT
+            fetch("https://script.google.com/macros/s/AKfycbyjMXTqTetcLfD0a9URH9zQr-h0O6QcadSYDxQFaILG3ec2hYAZGmxHrqRLXXVSOzPn/exec", {
+                method: "POST",
+                mode: "no-cors",
+                body: JSON.stringify(data)
+            });
+            alert("✅ Turno Confirmado. Se ha enviado un correo."); 
+            location.reload(); 
+        }
+        catch (e) { alert("Error al guardar."); btn.disabled = false; }
     };
 }
 
