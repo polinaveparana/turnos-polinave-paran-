@@ -1,4 +1,4 @@
-// script.js - VERSIÓN FINAL OFICIAL (Cuenta Polinave PNA)
+// script.js - VERSIÓN CORREGIDA PARA GITHUB PAGES
 const firebaseConfig = {
     apiKey: "AIzaSyDKTwF1m_kejyna5sN6wyBOO32A31hCl8o",
     authDomain: "turnos-pna-oficial-2.firebaseapp.com",
@@ -18,9 +18,11 @@ const HORA_INICIO = 7, HORA_FIN = 13, INTERVALO = 15;
 const feriados = ["2026-01-01", "2026-02-16", "2026-02-17", "2026-03-24", "2026-04-02", "2026-04-03", "2026-05-01", "2026-05-25", "2026-06-15", "2026-06-20", "2026-07-09", "2026-08-17", "2026-10-12", "2026-11-20", "2026-12-08", "2026-12-25"];
 
 let turnosTomados = [];
-const ruta = window.location.pathname;
+// Corregido: Detección más robusta para GitHub
+const esAdmin = window.location.href.includes('admin.html');
+const esVisor = window.location.href.includes('visor.html');
 
-// --- FUNCIÓN DIBUJAR TABLA (ADMIN Y VISOR) ---
+// --- FUNCIÓN DIBUJAR TABLA ---
 function dibujarTabla(f, conAcciones) {
     const idCont = conAcciones ? 'contenedor-tabla' : 'contenedor-tabla-visor';
     const idTotal = conAcciones ? 'total-turnos' : 'total-turnos-visor';
@@ -40,46 +42,40 @@ function dibujarTabla(f, conAcciones) {
     cont.innerHTML = html + '</tbody></table>';
 }
 
-// --- LÓGICA POR PÁGINA ---
-if (ruta.includes('admin.html')) {
+// --- LÓGICA DE RUTAS ---
+if (esAdmin) {
     const initAdmin = () => {
-        document.getElementById('area-login').style.display = 'none';
-        document.getElementById('dashboard-contenido').style.display = 'block';
+        const areaLogin = document.getElementById('area-login');
+        const dashboard = document.getElementById('dashboard-contenido');
+        if(areaLogin) areaLogin.style.display = 'none';
+        if(dashboard) dashboard.style.display = 'block';
+        
         coleccionTurnos.onSnapshot(snap => {
             turnosTomados = snap.docs.map(d => ({id: d.id, ...d.data()}));
-            dibujarTabla(document.getElementById('filtro-fecha').value, true);
-        });
+            const filtro = document.getElementById('filtro-fecha');
+            dibujarTabla(filtro ? filtro.value : null, true);
+        }, err => console.error("Error Firestore Admin:", err));
     };
 
     auth.onAuthStateChanged(user => { if (user) initAdmin(); });
 
-    document.getElementById('btn-login').onclick = async () => {
+    const btnLogin = document.getElementById('btn-login');
+    if(btnLogin) btnLogin.onclick = async () => {
         const email = document.getElementById('admin-email').value;
         const pass = document.getElementById('admin-password').value;
         try {
             await auth.signInWithEmailAndPassword(email, pass);
             initAdmin();
-        } catch (e) { alert("Acceso denegado: Usuario o contraseña incorrectos."); }
+        } catch (e) { alert("Acceso denegado."); }
     };
 
-    document.getElementById('btn-logout').onclick = () => { auth.signOut().then(() => location.reload()); };
-    document.getElementById('filtro-fecha').onchange = (e) => dibujarTabla(e.target.value, true);
+    const btnLogout = document.getElementById('btn-logout');
+    if(btnLogout) btnLogout.onclick = () => { auth.signOut().then(() => location.reload()); };
     
-    document.getElementById('btn-descargar').onclick = () => {
-        const fecha = document.getElementById('filtro-fecha').value || new Date().toISOString().split('T')[0];
-        const lista = turnosTomados.filter(t => t.fecha === fecha).sort((a,b) => a.horario.localeCompare(b.horario));
-        if (lista.length === 0) return alert("No hay turnos para descargar.");
-        let csvContent = "data:text/csv;charset=utf-8,HORA,NOMBRE,DNI,TRAMITE\n";
-        lista.forEach(t => { csvContent += `${t.horario},${t.nombre},${t.dni},${t.tramite}\n`; });
-        const link = document.createElement("a");
-        link.setAttribute("href", encodeURI(csvContent));
-        link.setAttribute("download", `turnos_pna_${fecha}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
+    const filtroF = document.getElementById('filtro-fecha');
+    if(filtroF) filtroF.onchange = (e) => dibujarTabla(e.target.value, true);
 
-} else if (ruta.includes('visor.html')) {
+} else if (esVisor) {
     const fVisor = document.getElementById('filtro-fecha-visor');
     if(fVisor) {
         fVisor.value = new Date().toISOString().split('T')[0];
@@ -89,12 +85,20 @@ if (ruta.includes('admin.html')) {
         });
         fVisor.onchange = (e) => dibujarTabla(e.target.value, false);
     }
-
 } else {
-    // LÓGICA INDEX.HTML (Público)
+    // LÓGICA PÚBLICA (index.html)
     const fInput = document.getElementById('fecha-turno');
-    const mañana = new Date(); mañana.setDate(mañana.getDate() + 1);
-    if(fInput) fInput.setAttribute('min', mañana.toISOString().split('T')[0]);
+    const hoy = new Date();
+    const mañana = new Date(hoy);
+    mañana.setDate(hoy.getDate() + 1);
+    
+    if(fInput) {
+        fInput.setAttribute('min', mañana.toISOString().split('T')[0]);
+        fInput.onchange = (e) => { 
+            generarHorarios(e.target.value); 
+            validarBoton(); 
+        };
+    }
 
     const validarBoton = () => {
         const btn = document.getElementById('boton-solicitar');
@@ -103,17 +107,17 @@ if (ruta.includes('admin.html')) {
         btn.disabled = campos.some(id => !document.getElementById(id)?.value.trim());
     };
 
-    if(fInput) fInput.onchange = (e) => { generarHorarios(e.target.value); validarBoton(); };
     document.querySelectorAll('input, select').forEach(el => el.oninput = validarBoton);
 
+    // Escuchar cambios en tiempo real
     coleccionTurnos.onSnapshot(snap => {
         turnosTomados = snap.docs.map(d => ({id: d.id, ...d.data()}));
-        if (fInput?.value) generarHorarios(fInput.value);
-    });
+        if (fInput && fInput.value) generarHorarios(fInput.value);
+    }, err => console.error("Error Firestore Público:", err));
 
-    document.getElementById('boton-solicitar').onclick = async () => {
-        const btn = document.getElementById('boton-solicitar');
-        btn.disabled = true;
+    const btnSolicitar = document.getElementById('boton-solicitar');
+    if(btnSolicitar) btnSolicitar.onclick = async () => {
+        btnSolicitar.disabled = true;
         const data = {
             tramite: document.getElementById('tipo-tramite').value,
             fecha: fInput.value,
@@ -125,16 +129,17 @@ if (ruta.includes('admin.html')) {
         };
         try { 
             await coleccionTurnos.add(data); 
-            // Envío de correo mediante el Script de Google
             fetch("https://script.google.com/macros/s/AKfycbyjMXTqTetcLfD0a9URH9zQr-h0O6QcadSYDxQFaILG3ec2hYAZGmxHrqRLXXVSOzPn/exec", {
                 method: "POST",
                 mode: "no-cors",
                 body: JSON.stringify(data)
             });
-            alert("✅ Turno Confirmado. Se ha enviado un correo con los detalles."); 
+            alert("✅ Turno Confirmado."); 
             location.reload(); 
+        } catch (e) { 
+            alert("Error al guardar."); 
+            btnSolicitar.disabled = false; 
         }
-        catch (e) { alert("Error al solicitar el turno."); btn.disabled = false; }
     };
 }
 
@@ -142,20 +147,30 @@ function generarHorarios(fechaSeleccionada) {
     const select = document.getElementById('horario-turno');
     const err = document.getElementById('mensaje-error');
     if (!select) return;
+
     select.innerHTML = '<option value="">-- Seleccione --</option>';
     select.disabled = true;
     if (err) err.style.display = 'none';
+
     if (!fechaSeleccionada) return;
+
     const fechaObj = new Date(fechaSeleccionada + 'T00:00:00');
+    // Bloqueo Fines de Semana (0=Dom, 6=Sab)
     if (feriados.includes(fechaSeleccionada) || fechaObj.getDay() === 0 || fechaObj.getDay() === 6) {
-        if (err) { err.textContent = "Día no hábil."; err.style.display = 'block'; }
+        if (err) { 
+            err.textContent = "Día no hábil (Sábado, Domingo o Feriado)."; 
+            err.style.display = 'block'; 
+        }
         return;
     }
+
     for (let h = HORA_INICIO; h <= HORA_FIN; h++) {
         for (let m = 0; m < 60; m += INTERVALO) {
             if (h === HORA_FIN && m > 0) break;
             const hhmm = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
-            if (!turnosTomados.some(t => t.fecha === fechaSeleccionada && t.horario === hhmm)) {
+            // Verificar disponibilidad
+            const ocupado = turnosTomados.some(t => t.fecha === fechaSeleccionada && t.horario === hhmm);
+            if (!ocupado) {
                 const opt = document.createElement('option');
                 opt.value = hhmm; opt.textContent = hhmm;
                 select.appendChild(opt);
