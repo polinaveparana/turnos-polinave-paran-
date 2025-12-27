@@ -1,4 +1,4 @@
-// script.js - VERSIÓN CORREGIDA PARA GITHUB PAGES
+// script.js - VERSIÓN FINAL CON DESCARGA Y ATENCIÓN
 const firebaseConfig = {
     apiKey: "AIzaSyDKTwF1m_kejyna5sN6wyBOO32A31hCl8o",
     authDomain: "turnos-pna-oficial-2.firebaseapp.com",
@@ -18,7 +18,6 @@ const HORA_INICIO = 7, HORA_FIN = 13, INTERVALO = 15;
 const feriados = ["2026-01-01", "2026-02-16", "2026-02-17", "2026-03-24", "2026-04-02", "2026-04-03", "2026-05-01", "2026-05-25", "2026-06-15", "2026-06-20", "2026-07-09", "2026-08-17", "2026-10-12", "2026-11-20", "2026-12-08", "2026-12-25"];
 
 let turnosTomados = [];
-// Corregido: Detección más robusta para GitHub
 const esAdmin = window.location.href.includes('admin.html');
 const esVisor = window.location.href.includes('visor.html');
 
@@ -35,9 +34,22 @@ function dibujarTabla(f, conAcciones) {
     
     document.getElementById(idTotal).textContent = `Turnos (${fecha}): ${lista.length}`;
     
-    let html = `<table class="tabla-turnos"><thead><tr><th>Hora</th><th>Nombre</th><th>DNI</th><th>Trámite</th>${conAcciones ? '<th>Acción</th>' : ''}</tr></thead><tbody>`;
+    let html = `<table class="tabla-turnos"><thead><tr><th>Hora</th><th>Nombre</th><th>DNI</th><th>Trámite</th>${conAcciones ? '<th>Acciones</th>' : ''}</tr></thead><tbody>`;
+    
     lista.forEach(t => {
-        html += `<tr><td><strong>${t.horario}</strong></td><td>${t.nombre}</td><td>${t.dni}</td><td style="font-size: 12px;">${t.tramite}</td>${conAcciones ? `<td><button class="btn-eliminar-admin" onclick="borrarT('${t.id}')">Eliminar</button></td>` : ''}</tr>`;
+        const estiloFila = t.atendido ? 'style="background-color: #d4edda; opacity: 0.8;"' : '';
+        html += `<tr ${estiloFila}>
+            <td><strong>${t.horario}</strong></td>
+            <td>${t.nombre}</td>
+            <td>${t.dni}</td>
+            <td style="font-size: 12px;">${t.tramite}</td>
+            ${conAcciones ? `<td>
+                <button class="btn-atendido" onclick="marcarAtendido('${t.id}', ${t.atendido || false})">
+                    ${t.atendido ? '✅' : 'Atender'}
+                </button>
+                <button class="btn-eliminar-admin" onclick="borrarT('${t.id}')">Eliminar</button>
+            </td>` : ''}
+        </tr>`;
     });
     cont.innerHTML = html + '</tbody></table>';
 }
@@ -75,6 +87,28 @@ if (esAdmin) {
     const filtroF = document.getElementById('filtro-fecha');
     if(filtroF) filtroF.onchange = (e) => dibujarTabla(e.target.value, true);
 
+    const btnDescargar = document.getElementById('btn-descargar');
+    if(btnDescargar) btnDescargar.onclick = () => {
+        const fecha = document.getElementById('filtro-fecha').value || new Date().toISOString().split('T')[0];
+        const lista = turnosTomados.filter(t => t.fecha === fecha).sort((a,b) => a.horario.localeCompare(b.horario));
+        if (lista.length === 0) return alert("No hay turnos para descargar.");
+        
+        let csvContent = "\uFEFFHORA,NOMBRE,DNI,TRAMITE,ESTADO\n";
+        lista.forEach(t => {
+            const estado = t.atendido ? "ATENDIDO" : "PENDIENTE";
+            csvContent += `"${t.horario}","${t.nombre}","${t.dni}","${t.tramite}","${estado}"\n`;
+        });
+        
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `turnos_pna_${fecha}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
 } else if (esVisor) {
     const fVisor = document.getElementById('filtro-fecha-visor');
     if(fVisor) {
@@ -109,7 +143,6 @@ if (esAdmin) {
 
     document.querySelectorAll('input, select').forEach(el => el.oninput = validarBoton);
 
-    // Escuchar cambios en tiempo real
     coleccionTurnos.onSnapshot(snap => {
         turnosTomados = snap.docs.map(d => ({id: d.id, ...d.data()}));
         if (fInput && fInput.value) generarHorarios(fInput.value);
@@ -125,6 +158,7 @@ if (esAdmin) {
             nombre: document.getElementById('nombre-solicitante').value.trim(),
             dni: document.getElementById('dni-solicitante').value.trim(),
             correo: document.getElementById('correo-solicitante').value.trim(),
+            atendido: false,
             creado: new Date().toLocaleString('es-AR')
         };
         try { 
@@ -147,15 +181,11 @@ function generarHorarios(fechaSeleccionada) {
     const select = document.getElementById('horario-turno');
     const err = document.getElementById('mensaje-error');
     if (!select) return;
-
     select.innerHTML = '<option value="">-- Seleccione --</option>';
     select.disabled = true;
     if (err) err.style.display = 'none';
-
     if (!fechaSeleccionada) return;
-
     const fechaObj = new Date(fechaSeleccionada + 'T00:00:00');
-    // Bloqueo Fines de Semana (0=Dom, 6=Sab)
     if (feriados.includes(fechaSeleccionada) || fechaObj.getDay() === 0 || fechaObj.getDay() === 6) {
         if (err) { 
             err.textContent = "Día no hábil (Sábado, Domingo o Feriado)."; 
@@ -163,12 +193,10 @@ function generarHorarios(fechaSeleccionada) {
         }
         return;
     }
-
     for (let h = HORA_INICIO; h <= HORA_FIN; h++) {
         for (let m = 0; m < 60; m += INTERVALO) {
             if (h === HORA_FIN && m > 0) break;
             const hhmm = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
-            // Verificar disponibilidad
             const ocupado = turnosTomados.some(t => t.fecha === fechaSeleccionada && t.horario === hhmm);
             if (!ocupado) {
                 const opt = document.createElement('option');
@@ -180,4 +208,10 @@ function generarHorarios(fechaSeleccionada) {
     select.disabled = false;
 }
 
-window.borrarT = async (id) => { if (confirm("¿Eliminar turno?")) await coleccionTurnos.doc(id).delete(); };
+window.marcarAtendido = async (id, estado) => {
+    await coleccionTurnos.doc(id).update({ atendido: !estado });
+};
+
+window.borrarT = async (id) => { 
+    if (confirm("¿Eliminar turno definitivamente?")) await coleccionTurnos.doc(id).delete(); 
+};
