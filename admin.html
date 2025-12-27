@@ -5,73 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Admin - PNA Paraná</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        body { font-family: sans-serif; margin: 0; padding: 0; background-color: #f0f2f5; }
-        .contenedor-admin { max-width: 500px; margin: 20px auto; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; }
-        .header-pna { background: #003366; color: white; padding: 20px; text-align: center; }
-        .btn-logout { background: #ff4d4d; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-bottom: 20px; }
-        
-        /* Botón de Descarga */
-        .btn-descargar { 
-            background-color: #28a745; 
-            color: white; 
-            border: none; 
-            padding: 12px; 
-            border-radius: 6px; 
-            width: 100%; 
-            font-weight: bold; 
-            cursor: pointer; 
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        .btn-descargar:hover { background-color: #218838; }
-
-        .tabla-turnos { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
-        .tabla-turnos th { background: #eee; padding: 10px; }
-        .tabla-turnos td { padding: 10px; border-bottom: 1px solid #ddd; text-align: left; }
-    </style>
 </head>
-<body>
-    <div class="header-pna">
-        <h1>Administración PNA</h1>
-        <p>Prefectura Naval Paraná</p>
-    </div>
+<body class="admin-body">
+    <header>
+        <h1>Panel de Administración</h1>
+        <p>Prefectura Naval Paraná - Gestión de Turnos</p>
+    </header>
 
     <main class="contenedor-admin">
-        <div id="area-login">
+        <div id="area-login" class="login-card">
             <h3>Acceso Restringido</h3>
-            <input type="password" id="admin-pin" placeholder="PIN de Seguridad" style="width: 90%; padding: 12px; margin-bottom: 10px;">
-            <button id="btn-login" class="btn-solicitar" style="width: 95%;">Ingresar</button>
+            <p style="font-size: 0.9em; color: #666; margin-bottom: 20px;">Ingrese sus credenciales oficiales</p>
+            <input type="email" id="admin-email" placeholder="Correo Electrónico" style="width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px;">
+            <input type="password" id="admin-password" placeholder="Contraseña" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px;">
+            <button id="btn-login" class="btn-solicitar" style="width: 100%;">Ingresar al Panel</button>
         </div>
 
         <div id="dashboard-contenido" style="display: none;">
-            <button id="btn-logout" class="btn-logout">Cerrar Sesión</button>
-            
-            <div style="text-align: left; margin-bottom: 20px;">
-                <label><strong>Filtrar por Fecha:</strong></label>
-                <input type="date" id="filtro-fecha" style="width: 100%; padding: 10px; margin-top: 5px;">
+            <div class="controles-admin">
+                <div class="filtro">
+                    <label>Filtrar por Fecha:</label>
+                    <input type="date" id="filtro-fecha">
+                </div>
+                <div class="acciones-admin">
+                    <button id="btn-descargar" class="btn-excel">📥 Descargar Planilla</button>
+                    <button id="btn-logout" class="btn-rojo">Cerrar Sesión</button>
+                </div>
             </div>
 
-            <button id="btn-descargar" class="btn-descargar">
-                📥 Descargar Planilla del Día
-            </button>
-
-            <h3 id="total-turnos" style="color: #003366;">Cargando...</h3>
-            
-            <div id="contenedor-tabla">
-                </div>
+            <h3 id="total-turnos">Cargando turnos...</h3>
+            <div id="contenedor-tabla"></div>
         </div>
     </main>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="script.js" defer></script>
-</body>
-</html>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="script.js" defer></script>
 </body>
 </html>
